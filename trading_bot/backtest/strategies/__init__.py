@@ -1,0 +1,1 @@
+"""Backtest strategy signal generators."""
