@@ -1,0 +1,586 @@
+You are an expert quantitative trading system architect and financial research analyst.
+Build me a complete, production-grade automated trading workflow in Python targeting
+Indian markets (NSE/BSE). Modular, extensible, runs continuously.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 0 — DEEP RESEARCH ENGINE (gateway — no stock skips this)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Every candidate stock must pass full research before entering the watchlist.
+Output a ResearchReport JSON that the LLM trading brain reads before any decision.
+
+### 0a. Macro & Thematic Intelligence
+
+Use MCP web search tools or googlesearch-python. Run these searches automatically:
+
+  "RBI monetary policy latest decision [current month year]"
+  "RBI repo rate change impact sectors India [current year]"
+  "FII DII flows NSE today week"
+  "India GDP growth forecast [current year] sector outlook"
+  "crude oil price forecast impact India [current month]"
+  "semiconductor storage demand outlook [current year]"
+  "NAND flash memory price cycle [current year]"
+  "India defense spending budget allocation [current year]"
+  "PLI scheme beneficiary companies India [sector]"
+  "China+1 strategy India manufacturing companies"
+  "data center growth India [current year]"
+
+THEMATIC BASKET BUILDER:
+When a macro theme is identified, automatically map to Indian listed equivalents:
+
+  Storage/memory prices rising   → Dixon Tech, Kaynes, Syrma SGS, Amber
+  RBI rate cut                   → NBFCs, housing finance, real estate
+  Crude oil rising               → ONGC, Oil India, MRPL (buy) | avoid aviation, paints
+  PLI Electronics                → Dixon, Kaynes, Syrma SGS
+  Defense capex                  → HAL, BEL, Paras Defence, MTAR Tech
+  Pharma US FDA approval         → Sun Pharma, Cipla, Divi's Labs
+  Data center boom               → Netweb Tech, INOX Wind, KEI Industries
+
+Store each theme as:
+  {
+    "theme": "NAND flash storage shortage",
+    "identified_date": "...",
+    "macro_trigger": "SK Hynix cut production, demand recovering",
+    "indian_beneficiaries": ["DIXON.NS", "KAYNES.NS", "SYRMA.NS"],
+    "confidence": 0.78,
+    "expected_duration_months": 6,
+    "sources": ["moneycontrol.com/...", "economictimes.com/..."]
+  }
+
+### 0b. RBI & Regulatory Layer
+
+Fetch and parse:
+  - RBI MPC decisions and repo rate direction
+  - SEBI circulars affecting trading (margin rules, F&O lot sizes)
+  - Ministry of Finance budget sector allocations
+  - FDI flows by sector (DPIIT data)
+
+Extract and store:
+  {
+    "rbi_stance": "accommodative",
+    "repo_rate": 6.25,
+    "rate_direction": "cutting",
+    "last_decision_date": "...",
+    "next_mpc_date": "...",
+    "sector_impact": {
+      "banking": "positive - NIM expansion",
+      "nbfc": "positive - lower borrowing costs",
+      "real_estate": "positive - affordable EMIs",
+      "pharma": "neutral",
+      "it": "neutral - depends on US demand"
+    }
+  }
+
+### 0c. Company Deep Research (runs per ticker)
+
+FINANCIAL HEALTH (scrape screener.in, tickertape.in, yfinance):
+  - Revenue growth: last 4 quarters YoY + 3-year CAGR
+  - EBITDA margin trend (expanding or contracting)
+  - ROE > 15% preferred | ROCE > 12% preferred
+  - Debt-to-equity (flag if D/E > 1.5 for non-banking)
+  - Free cash flow: positive for 2+ years?
+  - Promoter holding % + quarter-on-quarter change
+  - FII/DII ownership trend (increasing = bullish signal)
+  - Promoter pledge > 50% = hard reject
+
+BUSINESS QUALITY (MCP web search per ticker):
+  "[company] business model competitive advantage moat"
+  "[company] management quality CEO track record"
+  "[company] order book pipeline [current year]"
+  "[company] concall transcript Q[latest] [year]"
+  "[company] expansion capex plans [current year]"
+  "[company] annual report [latest year] highlights"
+
+CATALYST RESEARCH:
+  "[company] upcoming catalysts triggers [current year]"
+  "[company] product launch US FDA approval [current year]"
+  "[company] government contract win [current year]"
+  "[company] quarterly results date next"
+  Flag: results within 30 days = elevated volatility risk
+
+RISK RESEARCH:
+  "[company] litigation SEBI notice fraud controversy"
+  "[company] promoter pledge increase [current year]"
+  "[company] auditor qualification annual report"
+  "[company] debt restructuring competition threat"
+  Hard rejects: SEBI action, auditor disclaimer, promoter fraud
+
+VALUATION:
+  - P/E vs sector median (> 2x sector = flag as expensive)
+  - PEG ratio (< 1 = undervalued)
+  - EV/EBITDA, P/B
+  - Analyst consensus target (average of 3+ targets from screener.in)
+  - yfinance: .recommendations, .institutional_holders, .financials
+
+### 0d. ResearchReport JSON (output per stock)
+
+  {
+    "symbol": "DIXON.NS",
+    "company_name": "Dixon Technologies",
+    "exchange": "NSE",
+    "sector": "Electronics Manufacturing",
+    "research_date": "ISO8601 timestamp IST",
+    "research_version": 1,
+
+    "macro_context": {
+      "relevant_themes": ["PLI Electronics", "China+1", "Make in India"],
+      "rbi_impact": "neutral - not rate sensitive",
+      "global_trigger": "Apple shifting manufacturing to India",
+      "tailwind_strength": "strong",
+      "headwind": "margin pressure from client concentration"
+    },
+
+    "fundamentals": {
+      "revenue_growth_3yr_cagr": 42.5,
+      "ebitda_margin_latest": 4.1,
+      "ebitda_margin_trend": "expanding",
+      "roe": 28.5,
+      "roce": 24.1,
+      "debt_to_equity": 0.3,
+      "fcf_positive": true,
+      "promoter_holding_pct": 34.2,
+      "promoter_holding_trend": "stable",
+      "fii_holding_trend": "increasing",
+      "fundamental_score": 8.2
+    },
+
+    "valuation": {
+      "current_price": 14250,
+      "pe_ratio": 82,
+      "sector_median_pe": 55,
+      "pe_premium_pct": 49,
+      "peg_ratio": 1.9,
+      "analyst_consensus": "BUY",
+      "avg_analyst_target": 16800,
+      "upside_to_target_pct": 17.9,
+      "valuation_flag": "premium_but_justified_by_growth"
+    },
+
+    "catalysts": [
+      "Apple supplier qualification expected Q2 2025",
+      "New Noida plant commissioned March 2025"
+    ],
+
+    "risks": [
+      "Samsung = 40% of revenue, high concentration",
+      "Thin margins vulnerable to RM cost spikes"
+    ],
+
+    "business_quality": {
+      "moat": "scale + government relationships + certifications",
+      "management_quality": "high - consistent execution",
+      "order_book_visibility": "high - 18 month contracts",
+      "quality_score": 8.5
+    },
+
+    "trading_recommendation": {
+      "action": "BUY",
+      "trading_style": "SWING",
+      "conviction": "HIGH",
+      "suggested_hold_period_days": "30-90",
+      "entry_zone": [13800, 14100],
+      "stop_loss": 12900,
+      "target_1": 15500,
+      "target_2": 16800,
+      "position_size_pct_portfolio": 4.0,
+      "rationale": "Strong PLI tailwind + Apple catalyst. Premium valuation justified by 42% CAGR. Enter on 3-5% dip."
+    },
+
+    "llm_summary": "One paragraph plain English summary of the entire thesis — why buy, key risk, catalyst, hold period, what would invalidate the trade.",
+
+    "next_review_date": "7 days from research_date",
+    "auto_refresh_interval_days": 7
+  }
+
+### 0e. Research Self-Improvement Loop
+
+  - Store all ResearchReports in SQLite table `research_reports`
+  - Every 7 days: re-run research for all active watchlist stocks
+  - Track: did catalyst materialize? Did risk materialize? Was price target hit?
+  - Store outcomes in `research_accuracy` table
+  - Every 30 days: call Claude API — "which research signals were most predictive this month?"
+  - Increase weight of accurate signals, decrease weight of inaccurate ones
+  - Save learnings to `system_learnings.json`, apply to next research cycle
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 1 — Stock Discovery Engine (background, runs continuously)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### 1a. News & Social Signal Fetcher
+
+  Reddit   : r/IndiaInvestments, r/Dalalstreet, r/stocks via PRAW
+  Twitter/X: tweepy — trending $TICKER, NSE:, BSE: mentions
+  News     : Moneycontrol, ET Markets, Livemint via BeautifulSoup / newspaper3k
+  Sentiment: VADER (fast) + FinBERT (accurate) — score each mention
+  Output   : ranked ticker list by mention frequency + sentiment velocity
+
+### 1b. High-Growth Stock Screener
+
+  Data: nsepy / nsetools / yfinance (.NS / .BO suffix)
+
+  Screen for MU-style breakout pattern:
+    Revenue growth YoY > 20%
+    Strong institutional buying last quarter
+    52-week range position > 60%
+    Relative strength vs Nifty50 > 1.2
+    Volume spike last 5 days > 1.5x average volume
+
+  Sectors: Pharma, Oil & Gas, Technology, Semiconductor, Specialty Chemicals,
+           Defence, EMS, Renewable Energy, Capital Goods
+
+  Rule: every candidate MUST pass Module 0 before entering watchlist
+
+### 1c. Web Search Augmentation
+
+  SerpAPI or googlesearch-python:
+    "[ticker] stock analysis site:moneycontrol.com OR site:screener.in"
+    "best NSE stocks high growth potential [current month year]"
+    "NSE [sector] breakout stocks [current month year]"
+  Cross-reference screener.in fundamental data
+  Parse analyst price targets
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 2 — MCP Server: Technical Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: `mcp_technical_analysis.py`
+Transport: stdio | Port: 8080 | Cache: 5 min | Timezone: IST
+
+TOOLS EXPOSED:
+
+  get_indicators(symbol, timeframe, params)
+    Library: pandas_ta (primary), ta-lib (fallback)
+    Returns: RSI, MACD, Bollinger Bands, EMA 9/21/50/200,
+             ATR, OBV, VWAP, Stochastic, ADX, Supertrend
+
+  get_support_resistance(symbol, lookback_days)
+    Pivot points, swing highs/lows, key S/R levels
+
+  get_candlestick_patterns(symbol)
+    Hammer, engulfing, doji, shooting star, morning star via pandas_ta
+
+  get_volume_profile(symbol, timeframe)
+    POC (point of control), value area high/low
+
+  scan_for_breakouts(symbol_list, criteria)
+    Batch scan all watchlist symbols simultaneously
+
+  get_sector_rotation()
+    Relative strength by sector vs Nifty50
+
+TUNABLE PARAMS (per symbol, set by ML optimizer):
+  rsi_period         : 14   (range 9–21)
+  macd_fast          : 12   (range 8–15)
+  macd_slow          : 26   (range 20–30)
+  macd_signal        : 9    (range 6–12)
+  bb_period          : 20   (range 15–25)
+  bb_std             : 2.0  (range 1.5–2.5)
+  ema_short          : 9
+  ema_medium         : 21
+  ema_long           : 50
+  atr_period         : 14
+  supertrend_period  : 10
+  supertrend_mult    : 3.0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 3 — ML Parameter Tuning via Backtesting
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Files: `backtester.py` + `ml_optimizer.py`
+Libraries: backtesting.py (primary), Backtrader (fallback), Optuna
+
+DATA: yfinance OHLCV, 3-year lookback per symbol
+
+STRATEGIES TO BACKTEST:
+  EMA crossover (9/21)
+  RSI mean reversion (oversold/overbought)
+  MACD + Bollinger Band combo
+  Supertrend breakout
+  Volume-confirmed breakout
+
+ML OPTIMIZATION:
+  Engine      : Optuna — Bayesian optimization
+  Trials      : 100–500 per symbol
+  Objective   : maximize Sharpe ratio, minimize max drawdown
+  Validation  : walk-forward only — never test on training data
+  Storage     : best params per symbol in SQLite `params_db`
+  Re-optimize : every 2 weeks OR when live performance degrades > 15%
+
+RESEARCH INTEGRATION:
+  Read ResearchReport conviction before backtesting:
+    conviction = HIGH   → allow larger position sizing in simulation
+    risks flagged       → tighten stop losses in simulation
+  Track: do high-conviction research stocks actually outperform low-conviction?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 4 — Trading Decision Engine
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STOCK CLASSIFICATION BY MARKET CAP:
+
+  > 20,000 Cr  →  SWING TRADE    hold 5–30 days   position 4% portfolio
+  > 5,000 Cr   →  SWING LIGHT    hold 3–10 days   position 2.5% portfolio
+  < 5,000 Cr   →  DAY TRADE      intraday only    position 1.5%, strict 1% SL
+
+SIGNAL REQUIREMENTS:
+  Swing     : 3+ indicator alignment + volume confirm + research conviction >= MEDIUM
+  Day trade : fast signals on 1min/5min chart, strict 1% stop loss, no overnight hold
+
+ENTRY / EXIT RULES:
+  Entry     : ATR-based zone
+  Stop loss : 1.5x ATR below entry (swing) | 1% hard stop (day trade)
+  Target    : minimum 1:2 risk-reward ratio
+  Sizing    : 2% portfolio risk per trade (fixed fractional, Kelly-informed)
+  Trailing  : activate trailing stop when Target 1 is hit, move SL to entry
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 5 — NOTIFICATION & APPROVAL GATEWAY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+### Architecture: provider-agnostic notification layer
+
+Build a clean abstract base so any provider can be swapped or added with
+zero changes to the rest of the system. This also makes the entire approval
+flow portable to OpenClaw or any other agentic workflow orchestrator later.
+
+File: `notifications/base.py`
+
+  class NotificationProvider(ABC):
+    @abstractmethod
+    async def send_message(self, text: str, parse_mode: str) -> str:
+      """Send a message. Returns message_id."""
+
+    @abstractmethod
+    async def send_document(self, content: str, filename: str) -> str:
+      """Send a file/document."""
+
+    @abstractmethod
+    async def poll_reply(self, message_id: str, timeout_seconds: int) -> str | None:
+      """Poll for a user reply to a specific message. Returns reply text or None."""
+
+    @abstractmethod
+    async def send_alert(self, text: str) -> None:
+      """Fire-and-forget urgent alert."""
+
+File: `notifications/telegram_provider.py`
+  Implements NotificationProvider using python-telegram-bot
+  - Bot token + chat ID from .env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+  - Inline keyboard buttons: YES / NO / WAIT / DETAILS
+  - Callback query handler maps button press to poll_reply response
+  - Supports MarkdownV2 formatting for clean structured messages
+
+File: `notifications/openclaw_provider.py`  ← stub, wire up tomorrow
+  Implements NotificationProvider using OpenClaw workflow hooks
+  - Receives approval requests as OpenClaw task nodes
+  - Human-in-the-loop approval maps to OpenClaw's built-in approval step
+  - send_message    → create OpenClaw task with stock research payload
+  - poll_reply      → query OpenClaw task status (approved / rejected / pending)
+  - send_alert      → trigger OpenClaw alert webhook
+  - File is fully stubbed with clear TODO comments — drop in real
+    OpenClaw SDK calls when ready, zero other files change
+
+File: `notifications/gateway.py`
+  - Reads NOTIFICATION_PROVIDER from .env
+    ("telegram" | "openclaw" | "console" for local dev/testing)
+  - Instantiates the correct provider at startup
+  - All modules import ONLY from gateway.py — never from a provider directly
+  - Adding a new provider tomorrow = create new file + update .env, done
+
+APPROVAL FLOW (provider-agnostic):
+
+  1. Research complete → gateway.send_message(formatted_alert)
+  2. Poll for reply every 5 min (max 24h wait)
+  3. YES     → add to watchlist, start watcher thread
+  4. NO      → log rejection, revisit in 7 days if still valid
+  5. WAIT    → re-ping in 48 hours
+  6. DETAILS → gateway.send_document(full ResearchReport as formatted text)
+
+TELEGRAM MESSAGE FORMAT:
+
+  ━━━━━━━━━━━━━━━━━━━━━━
+  STOCK ALERT — DIXON.NS
+  Dixon Technologies | EMS
+  Signal: SWING BUY | Conviction: HIGH
+  ━━━━━━━━━━━━━━━━━━━━━━
+  MACRO THESIS
+  PLI scheme + Apple India shift.
+  EMS demand growing 35% YoY.
+
+  FUNDAMENTALS
+  Revenue CAGR 3yr : 42%
+  ROE              : 28%
+  D/E              : 0.3
+  Promoters        : stable 34%
+  FIIs             : increasing
+
+  TECHNICALS
+  Entry  : 13,800 – 14,100
+  SL     : 12,900
+  T1     : 15,500 | T2 : 16,800
+  RSI    : 58 | EMA9 > EMA21
+  Volume : 2.1x avg
+  Backtest Sharpe : 1.42 | Win rate : 61%
+
+  RISKS
+  Samsung = 40% revenue
+  Thin margins
+
+  Hold : 30–90 days | Position : 4% portfolio
+  ━━━━━━━━━━━━━━━━━━━━━━
+  [YES]  [NO]  [WAIT]  [DETAILS]
+
+SCHEDULED MESSAGES:
+  8:45 AM IST  → Pre-market brief: macro news, what to watch today
+  3:35 PM IST  → EOD summary: P&L, open positions, signals missed
+  10:00 PM IST → Nightly digest: new stocks found, research updates
+  Instant      → SL triggered, target hit, volume anomaly detected
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 6 — Per-Symbol Watcher Threads
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: `symbol_watcher.py`
+
+One thread per approved symbol. Runs 9:15 AM – 3:30 PM IST.
+Thread pool: max 50 concurrent watchers.
+
+Each watcher monitors:
+  Entry signal trigger
+  Stop loss breach       → instant alert + auto-exit if configured
+  Target 1 hit           → move SL to entry, activate trailing stop
+  Target 2 hit           → close or trail aggressively
+  Volume spike > 3x      → instant alert, possible news event
+  Reversal pattern       → 15min candlestick reversal, flag for review
+  Research invalidation  → if new negative news found, flag immediately
+
+LOG: full OHLCV + indicator state every interval to SQLite `tick_data`
+INTERVAL: 60s swing | 30s day trade | 10s when within 2% of SL or target
+
+SELF-IMPROVEMENT PER WATCHER:
+  Track counterfactual P&L: "what if I exited 1 candle earlier/later?"
+  Surface top 3 improvement ideas weekly via gateway alert
+  Log to `watcher_learnings` table
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 7 — Portfolio Evolution Thread (24/7)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: `portfolio_manager.py`
+
+Runs continuously even outside market hours.
+
+SCHEDULE:
+  Every 4 hours    → re-run discovery, scan for new candidates
+  Every 6 hours    → refresh macro research (RBI news, global triggers)
+  Every night 10PM → re-optimize ML params for underperformers
+  Every 7 days     → refresh ResearchReport for all active watchlist stocks
+  Every 30 days    → full portfolio review, sector exposure rebalance
+  Every 30 days    → research accuracy audit via Claude API
+
+AUTO-REMOVE from watchlist if:
+  No valid signal for 14 consecutive days
+  Revenue miss or promoter pledge increase detected in research refresh
+  Research risk materialized (SEBI action, fraud, major client loss)
+  Macro theme reversed
+
+CONTINUOUS LEARNING:
+  Store all trade outcomes: entry, exit, P&L, signals that fired
+  Monthly Claude API call: "which research and technical signals were most predictive?"
+  Adjust signal weights based on empirical hit rate
+  Save to `system_learnings.json`, apply weights in next research cycle
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## MODULE 8 — Execution Layer
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: `broker_connector.py`
+
+Default: PAPER TRADING. Real money only when LIVE_TRADING=true in .env.
+
+Primary  : Zerodha Kite API (kiteconnect Python SDK)
+Fallback : Upstox API
+
+Implement:
+  Market, limit, SL-M order types
+  Trailing stop management (modify order as price moves)
+  Order rejection handling with retry
+  Rate limit handling with exponential backoff
+  Live P&L tracking vs paper P&L tracking
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## PROJECT STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  trading_bot/
+  ├── main.py
+  ├── config.py
+  ├── .env                              # all API keys — never hardcode
+  ├── mcp_technical_analysis.py         # run as separate MCP process
+  ├── research/
+  │   ├── macro_researcher.py
+  │   ├── company_researcher.py
+  │   ├── research_report.py
+  │   └── research_accuracy.py
+  ├── discovery/
+  │   ├── reddit_fetcher.py
+  │   ├── twitter_fetcher.py
+  │   ├── news_scraper.py
+  │   └── stock_screener.py
+  ├── analysis/
+  │   ├── backtester.py
+  │   ├── ml_optimizer.py
+  │   └── signal_generator.py
+  ├── trading/
+  │   ├── symbol_watcher.py
+  │   ├── portfolio_manager.py
+  │   ├── broker_connector.py
+  │   └── position_sizer.py
+  ├── notifications/
+  │   ├── base.py                       # abstract NotificationProvider
+  │   ├── gateway.py                    # reads .env, routes to correct provider
+  │   ├── telegram_provider.py          # active provider
+  │   ├── openclaw_provider.py          # stubbed, ready to wire tomorrow
+  │   └── console_provider.py           # for local dev/testing, no external deps
+  ├── data/
+  │   ├── research_reports/             # one JSON file per stock
+  │   ├── system_learnings.json
+  │   ├── trades.db
+  │   ├── research.db
+  │   └── portfolio.db
+  └── logs/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## CONSTRAINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Python 3.11+ | all keys in .env | loguru structured JSON logs
+  Every external call: try/except + exponential backoff retry
+  IST timezone enforced everywhere (zoneinfo)
+  No trades outside 9:15 AM – 3:30 PM IST
+  Graceful shutdown: SIGINT saves all state before exit
+  Unit tests for: signal generator, backtester, research JSON schema,
+                  each NotificationProvider (mock send + poll)
+  Research gate    : no stock enters watchlist without completed ResearchReport
+  Human gate       : no stock enters active trading without approval via gateway
+  Notification rule: all modules call gateway.py only — never a provider directly
+  Paper trading default — LIVE_TRADING=true required to touch real money
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## BUILD ORDER — get my approval after each step before proceeding
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  STEP 1  Project scaffold + requirements.txt + .env template
+  STEP 2  Notification layer — build base.py + gateway.py + all three providers
+            Test: console_provider sends a mock stock alert end-to-end
+  STEP 3  MCP server — test all indicators return correct values
+  STEP 4  Research engine — run on DIXON.NS, show me full ResearchReport JSON
+  STEP 5  Stock screener + discovery (reddit + news fetcher)
+  STEP 6  Backtester + Optuna optimizer — test EMA crossover on 3 stocks
+  STEP 7  Telegram bot — test approval flow with inline YES/NO buttons
+  STEP 8  Symbol watcher threads
+  STEP 9  Portfolio manager background thread
+  STEP 10 Broker connector (paper trading mode)
+  STEP 11 Wire everything in main.py — full end-to-end test
+
+Ask me clarifying questions if anything is ambiguous before writing code.
+Show what you built after each step. Wait for my go-ahead before the next one.
