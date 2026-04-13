@@ -88,7 +88,7 @@ trading_bot/
 | Step | Module | What |
 |------|--------|------|
 | ~~6~~ | ~~`trading_bot/backtest/`~~ | ~~Backtester + Optuna optimizer~~ ✅ |
-| 7 | `trading_bot/notifications/telegram_provider.py` | Full approval flow with YES/NO/WAIT/DETAILS inline buttons |
+| ~~7~~ | ~~`trading_bot/notifications/telegram_provider.py`~~ | ~~Full approval flow with YES/NO/WAIT/DETAILS inline buttons~~ ✅ |
 | 8 | `trading_bot/watcher/` | Per-symbol polling threads (market hours only) |
 | 9 | `trading_bot/portfolio/` | Portfolio manager — 24/7 discovery + research refresh loop |
 | 10 | `trading_bot/trading/` | Zerodha Kite broker connector (paper + live) |
