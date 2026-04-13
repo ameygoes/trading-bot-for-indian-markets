@@ -1,0 +1,63 @@
+# ── Core ──────────────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0
+loguru>=0.7.2
+pydantic>=2.6.0
+zoneinfo; python_version < "3.9"      # backport — 3.11+ has it built-in
+
+# ── Data & Market Feed ────────────────────────────────────────────────────────
+yfinance>=0.2.38
+nsepy>=0.8                             # NSE historical data
+pandas>=2.2.0
+numpy>=1.26.0
+
+# ── Technical Analysis ────────────────────────────────────────────────────────
+pandas_ta>=0.3.14b
+# TA-Lib requires system lib: brew install ta-lib  (optional fallback)
+# TA-Lib>=0.4.28
+
+# ── MCP Server ────────────────────────────────────────────────────────────────
+mcp>=1.0.0                             # MCP Python SDK
+
+# ── Backtesting & ML Optimization ────────────────────────────────────────────
+backtesting>=0.3.3
+optuna>=3.6.1
+scikit-learn>=1.4.0
+
+# ── Notifications ─────────────────────────────────────────────────────────────
+python-telegram-bot>=21.3             # async Telegram bot
+
+# ── Web Scraping & News ───────────────────────────────────────────────────────
+requests>=2.31.0
+httpx>=0.27.0
+beautifulsoup4>=4.12.3
+newspaper3k>=0.2.8
+googlesearch-python>=1.2.4
+
+# ── Social Signals ────────────────────────────────────────────────────────────
+praw>=7.7.1                            # Reddit
+tweepy>=4.14.0                         # Twitter/X
+
+# ── Sentiment ─────────────────────────────────────────────────────────────────
+vaderSentiment>=3.3.2
+transformers>=4.40.0                   # FinBERT
+torch>=2.2.0                           # FinBERT backend (CPU is fine)
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy>=2.0.29
+aiosqlite>=0.20.0
+
+# ── Broker ────────────────────────────────────────────────────────────────────
+kiteconnect>=5.0.1                     # Zerodha Kite
+# upstox-python-sdk>=2.3.0            # Upstox fallback (uncomment if needed)
+
+# ── LLM (research self-improvement loop) ─────────────────────────────────────
+anthropic>=0.26.0
+
+# ── Async ─────────────────────────────────────────────────────────────────────
+asyncio-throttle>=1.0.2
+tenacity>=8.2.3                        # retry with exponential backoff
+
+# ── Dev / Testing ─────────────────────────────────────────────────────────────
+pytest>=8.2.0
+pytest-asyncio>=0.23.6
+pytest-mock>=3.14.0
